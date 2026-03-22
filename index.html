@@ -1,0 +1,1173 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SM-EV · Simulados de Inspeção Visual Subaquática</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --deep: #050d1a;
+    --navy: #0a1628;
+    --ocean: #0d2137;
+    --steel: #112840;
+    --accent: #00c8ff;
+    --accent2: #00ff9d;
+    --warn: #ff6b35;
+    --danger: #ff3b5c;
+    --text: #e8f4ff;
+    --muted: #7a9ab5;
+    --card: rgba(255,255,255,0.04);
+    --border: rgba(0,200,255,0.15);
+    --radius: 12px;
+    --glow: 0 0 20px rgba(0,200,255,0.25);
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    font-family: 'Barlow', sans-serif;
+    background: var(--deep);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Underwater BG */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background:
+      radial-gradient(ellipse at 20% 80%, rgba(0,100,180,0.15) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 20%, rgba(0,200,255,0.08) 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 50%, rgba(0,50,100,0.2) 0%, transparent 80%);
+    pointer-events: none; z-index: 0;
+  }
+
+  /* Animated particles */
+  .bubbles { position:fixed; inset:0; pointer-events:none; z-index:0; overflow:hidden; }
+  .bubble {
+    position:absolute; border-radius:50%;
+    background: radial-gradient(circle at 30% 30%, rgba(0,200,255,0.4), rgba(0,200,255,0.05));
+    border: 1px solid rgba(0,200,255,0.2);
+    animation: rise linear infinite;
+  }
+  @keyframes rise {
+    0%   { transform: translateY(110vh) translateX(0) scale(1); opacity: 0; }
+    10%  { opacity: 1; }
+    90%  { opacity: 0.5; }
+    100% { transform: translateY(-10vh) translateX(30px) scale(1.2); opacity: 0; }
+  }
+
+  /* ======================== SCREENS ======================== */
+  .screen { position:relative; z-index:1; display:none; min-height:100vh; }
+  .screen.active { display:flex; flex-direction:column; }
+
+  /* ======================== HOME ======================== */
+  #home {
+    align-items: center; justify-content: center;
+    padding: 40px 20px; text-align: center;
+  }
+
+  .logo-badge {
+    display: inline-flex; align-items: center; gap: 12px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 100px; padding: 8px 20px;
+    margin-bottom: 32px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 13px; font-weight: 600; letter-spacing: 3px;
+    color: var(--accent); text-transform: uppercase;
+  }
+  .logo-badge::before {
+    content: '';
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--accent2);
+    box-shadow: 0 0 8px var(--accent2);
+    animation: blink 2s ease-in-out infinite;
+  }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  .home-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: clamp(48px, 10vw, 96px);
+    font-weight: 900; line-height: 0.9;
+    letter-spacing: -1px;
+    background: linear-gradient(135deg, #ffffff 0%, #00c8ff 50%, #00ff9d 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    margin-bottom: 16px;
+  }
+  .home-subtitle {
+    font-size: 16px; color: var(--muted); font-weight: 300;
+    letter-spacing: 1px; margin-bottom: 48px;
+  }
+
+  .stats-row {
+    display: flex; gap: 24px; justify-content: center;
+    flex-wrap: wrap; margin-bottom: 56px;
+  }
+  .stat-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px 28px; text-align: center;
+    min-width: 110px;
+  }
+  .stat-num {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 40px; font-weight: 800; color: var(--accent);
+    line-height: 1;
+  }
+  .stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 2px; margin-top: 4px; }
+
+  .prova-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 12px; width: 100%; max-width: 700px;
+    margin: 0 auto 48px;
+  }
+  .prova-btn {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px 12px;
+    cursor: pointer; transition: all 0.2s;
+    text-align: center;
+    font-family: 'Barlow Condensed', sans-serif;
+  }
+  .prova-btn:hover {
+    background: rgba(0,200,255,0.1);
+    border-color: var(--accent);
+    box-shadow: var(--glow);
+    transform: translateY(-2px);
+  }
+  .prova-btn .pnum {
+    font-size: 32px; font-weight: 800; color: var(--accent);
+    display: block; line-height: 1;
+  }
+  .prova-btn .plabel {
+    font-size: 11px; color: var(--muted); text-transform: uppercase;
+    letter-spacing: 1px; margin-top: 4px;
+  }
+  .prova-btn .pscore {
+    font-size: 13px; font-weight: 600; margin-top: 8px;
+    display: none;
+  }
+  .prova-btn.done .pscore { display: block; }
+  .prova-btn.done { border-color: var(--accent2); }
+  .prova-btn.done .pnum { color: var(--accent2); }
+
+  /* Mode selector */
+  .mode-row {
+    display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+  .mode-toggle {
+    display: flex; gap: 0; border: 1px solid var(--border);
+    border-radius: 100px; overflow: hidden; background: var(--card);
+  }
+  .mode-toggle button {
+    background: none; border: none; color: var(--muted);
+    padding: 10px 20px; cursor: pointer; font-family: 'Barlow', sans-serif;
+    font-size: 13px; font-weight: 500; transition: all 0.2s;
+    letter-spacing: 0.5px;
+  }
+  .mode-toggle button.active {
+    background: var(--accent); color: var(--deep); font-weight: 700;
+  }
+
+  /* ======================== EXAM ======================== */
+  #exam { padding: 0; display: flex; flex-direction: column; min-height: 100vh; }
+
+  .exam-header {
+    background: rgba(5,13,26,0.95);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 20px;
+    display: flex; align-items: center; gap: 12px;
+    position: sticky; top: 0; z-index: 100;
+    flex-wrap: wrap;
+  }
+  .exam-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 20px; font-weight: 800; color: var(--accent);
+    letter-spacing: 1px; flex: 1;
+  }
+  .timer {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 28px; font-weight: 800;
+    color: var(--accent2); letter-spacing: 2px;
+    min-width: 90px; text-align: right;
+  }
+  .timer.warn { color: var(--warn); animation: pulse 1s infinite; }
+  .timer.danger { color: var(--danger); }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+
+  .progress-bar {
+    height: 3px; background: var(--ocean);
+    position: relative; overflow: visible;
+  }
+  .progress-fill {
+    height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2));
+    transition: width 0.4s ease;
+    box-shadow: 0 0 8px var(--accent);
+  }
+
+  /* Question navigation dots */
+  .q-nav {
+    padding: 12px 20px;
+    display: flex; flex-wrap: wrap; gap: 6px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(5,13,26,0.8);
+  }
+  .q-dot {
+    width: 28px; height: 28px; border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--card); cursor: pointer;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 11px; font-weight: 700;
+    color: var(--muted); transition: all 0.15s;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .q-dot:hover { border-color: var(--accent); color: var(--accent); }
+  .q-dot.answered { background: rgba(0,200,255,0.15); border-color: var(--accent); color: var(--accent); }
+  .q-dot.current { background: var(--accent); color: var(--deep); border-color: var(--accent); }
+  .q-dot.correct { background: rgba(0,255,157,0.2); border-color: var(--accent2); color: var(--accent2); }
+  .q-dot.wrong { background: rgba(255,59,92,0.2); border-color: var(--danger); color: var(--danger); }
+
+  /* Question area */
+  .question-area {
+    flex: 1; padding: 28px 20px;
+    max-width: 800px; margin: 0 auto; width: 100%;
+  }
+
+  .q-counter {
+    font-size: 12px; color: var(--muted); text-transform: uppercase;
+    letter-spacing: 2px; margin-bottom: 16px;
+    font-family: 'Barlow Condensed', sans-serif; font-weight: 600;
+  }
+  .q-counter span { color: var(--accent); }
+
+  .q-text {
+    font-size: 17px; line-height: 1.65; color: var(--text);
+    margin-bottom: 28px; font-weight: 400;
+    border-left: 3px solid var(--accent);
+    padding-left: 16px;
+  }
+
+  .options { display: flex; flex-direction: column; gap: 10px; }
+
+  .option {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 14px 18px;
+    cursor: pointer; transition: all 0.2s;
+    display: flex; gap: 14px; align-items: flex-start;
+    font-size: 15px; line-height: 1.5;
+  }
+  .option:hover:not(.disabled) {
+    background: rgba(0,200,255,0.08);
+    border-color: rgba(0,200,255,0.4);
+    transform: translateX(3px);
+  }
+  .option-letter {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 16px; font-weight: 800;
+    color: var(--accent); min-width: 20px; padding-top: 1px;
+  }
+  .option.selected {
+    background: rgba(0,200,255,0.12);
+    border-color: var(--accent);
+    box-shadow: var(--glow);
+  }
+  .option.selected .option-letter { color: var(--accent); }
+  .option.correct-answer {
+    background: rgba(0,255,157,0.12);
+    border-color: var(--accent2);
+  }
+  .option.correct-answer .option-letter { color: var(--accent2); }
+  .option.wrong-answer {
+    background: rgba(255,59,92,0.08);
+    border-color: var(--danger);
+  }
+  .option.wrong-answer .option-letter { color: var(--danger); }
+  .option.disabled { cursor: default; }
+
+  /* Feedback badge */
+  .feedback-badge {
+    display: none; margin-top: 20px;
+    padding: 12px 18px; border-radius: var(--radius);
+    font-weight: 600; font-size: 14px;
+  }
+  .feedback-badge.show { display: flex; align-items: center; gap: 10px; }
+  .feedback-badge.correct { background: rgba(0,255,157,0.1); border: 1px solid var(--accent2); color: var(--accent2); }
+  .feedback-badge.wrong { background: rgba(255,59,92,0.1); border: 1px solid var(--danger); color: var(--danger); }
+
+  /* Nav buttons */
+  .exam-nav {
+    padding: 16px 20px 32px;
+    display: flex; gap: 10px; justify-content: center;
+    flex-wrap: wrap; max-width: 800px; margin: 0 auto; width: 100%;
+  }
+  .btn {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 16px; font-weight: 700;
+    padding: 12px 28px; border-radius: 100px;
+    cursor: pointer; letter-spacing: 1px;
+    text-transform: uppercase; border: none;
+    transition: all 0.2s;
+  }
+  .btn-primary {
+    background: var(--accent); color: var(--deep);
+    box-shadow: 0 4px 20px rgba(0,200,255,0.3);
+  }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 28px rgba(0,200,255,0.5); }
+  .btn-outline {
+    background: var(--card); border: 1px solid var(--border);
+    color: var(--muted);
+  }
+  .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-danger {
+    background: rgba(255,59,92,0.15); border: 1px solid var(--danger);
+    color: var(--danger);
+  }
+  .btn-success {
+    background: var(--accent2); color: var(--deep);
+    box-shadow: 0 4px 20px rgba(0,255,157,0.3);
+  }
+
+  /* ======================== RESULTS ======================== */
+  #results {
+    align-items: center; justify-content: center;
+    padding: 40px 20px; text-align: center;
+  }
+
+  .result-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 20px; padding: 48px 40px;
+    max-width: 520px; width: 100%;
+  }
+
+  .result-badge {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 12px; letter-spacing: 3px; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 24px;
+  }
+
+  .score-ring {
+    width: 160px; height: 160px;
+    margin: 0 auto 28px;
+    position: relative; display: flex; align-items: center; justify-content: center;
+  }
+  .score-ring svg {
+    position: absolute; inset: 0;
+    transform: rotate(-90deg);
+  }
+  .score-ring circle {
+    fill: none; stroke-width: 8;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 1s ease;
+  }
+  .score-ring .bg-ring { stroke: var(--steel); }
+  .score-ring .score-arc { stroke: var(--accent2); }
+  .score-ring.fail .score-arc { stroke: var(--danger); }
+  .score-pct {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 48px; font-weight: 900;
+    color: var(--text); line-height: 1;
+    position: relative; z-index: 1;
+  }
+
+  .result-verdict {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 36px; font-weight: 900;
+    margin-bottom: 8px;
+  }
+  .result-verdict.approved { color: var(--accent2); }
+  .result-verdict.failed { color: var(--danger); }
+
+  .result-detail {
+    font-size: 15px; color: var(--muted); margin-bottom: 32px;
+  }
+  .result-detail strong { color: var(--text); }
+
+  .result-breakdown {
+    display: flex; gap: 12px; margin-bottom: 32px;
+    justify-content: center;
+  }
+  .rb-item {
+    flex: 1; background: var(--ocean);
+    border-radius: var(--radius); padding: 16px;
+  }
+  .rb-num {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 32px; font-weight: 800; line-height: 1;
+  }
+  .rb-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
+  .rb-item.good .rb-num { color: var(--accent2); }
+  .rb-item.bad .rb-num { color: var(--danger); }
+
+  /* Review mode toggle */
+  .review-toggle {
+    background: none; border: 1px solid var(--border);
+    color: var(--muted); border-radius: 100px;
+    padding: 10px 20px; cursor: pointer;
+    font-family: 'Barlow', sans-serif; font-size: 14px;
+    margin-bottom: 12px; transition: all 0.2s;
+    width: 100%;
+  }
+  .review-toggle:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* ======================== MODAL ======================== */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(5,13,26,0.85); backdrop-filter: blur(8px);
+    z-index: 1000; align-items: center; justify-content: center; padding: 20px;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal {
+    background: var(--navy); border: 1px solid var(--border);
+    border-radius: 20px; padding: 36px; max-width: 420px; width: 100%;
+    text-align: center;
+  }
+  .modal-icon { font-size: 48px; margin-bottom: 16px; }
+  .modal-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 28px; font-weight: 800; margin-bottom: 8px;
+  }
+  .modal-text { font-size: 15px; color: var(--muted); margin-bottom: 28px; line-height: 1.6; }
+  .modal-btns { display: flex; gap: 10px; justify-content: center; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: var(--deep); }
+  ::-webkit-scrollbar-thumb { background: var(--steel); border-radius: 3px; }
+
+  @media (max-width: 500px) {
+    .home-title { font-size: 56px; }
+    .prova-grid { grid-template-columns: repeat(4, 1fr); gap: 8px; }
+    .prova-btn { padding: 14px 8px; }
+    .prova-btn .pnum { font-size: 24px; }
+    .result-card { padding: 28px 20px; }
+    .q-nav { gap: 4px; }
+    .q-dot { width: 24px; height: 24px; font-size: 10px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Bubbles -->
+<div class="bubbles" id="bubbles"></div>
+
+<!-- ==================== HOME ==================== -->
+<div id="home" class="screen active">
+  <div class="logo-badge">ABENDI · SM-EV · Nível 2</div>
+  <h1 class="home-title">SIMULADOS<br>EV</h1>
+  <p class="home-subtitle">Ensaio Visual Subaquático · 13 Provas · 40 Questões</p>
+
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-num">13</div><div class="stat-label">Provas</div></div>
+    <div class="stat-card"><div class="stat-num">40</div><div class="stat-label">Questões</div></div>
+    <div class="stat-card"><div class="stat-num">70<span style="font-size:20px">%</span></div><div class="stat-label">Aprovação</div></div>
+    <div class="stat-card"><div class="stat-num">60'</div><div class="stat-label">Cronômetro</div></div>
+  </div>
+
+  <div class="mode-toggle" style="margin-bottom:12px">
+    <button class="active" onclick="setMode('simulado',this)">⏱ Simulado</button>
+    <button onclick="setMode('estudo',this)">📚 Estudo</button>
+  </div>
+  <p style="font-size:12px;color:var(--muted);margin-bottom:28px">
+    Simulado: tempo real + resposta ao final &nbsp;|&nbsp; Estudo: gabarito imediato
+  </p>
+
+  <div class="prova-grid" id="provaGrid"></div>
+
+  <p style="font-size:12px;color:var(--muted)">Norma ABNT NBR 16244 · Petrobras N-1812 · N-2073</p>
+</div>
+
+<!-- ==================== EXAM ==================== -->
+<div id="exam" class="screen">
+  <div class="exam-header">
+    <div class="exam-title" id="examTitle">PROVA 01</div>
+    <div id="timerDisplay" class="timer">60:00</div>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+  <div class="q-nav" id="qNav"></div>
+
+  <div class="question-area">
+    <div class="q-counter">Questão <span id="qCurrent">1</span> de <span id="qTotal">40</span></div>
+    <div class="q-text" id="qText"></div>
+    <div class="options" id="optionsContainer"></div>
+    <div class="feedback-badge" id="feedbackBadge"></div>
+  </div>
+
+  <div class="exam-nav">
+    <button class="btn btn-outline" onclick="prevQuestion()">← Anterior</button>
+    <button class="btn btn-outline" onclick="nextQuestion()">Próxima →</button>
+    <button class="btn btn-danger" onclick="showFinishModal()">Finalizar Prova</button>
+  </div>
+</div>
+
+<!-- ==================== RESULTS ==================== -->
+<div id="results" class="screen">
+  <div class="result-card">
+    <div class="result-badge" id="resultBadge">PROVA 01 · RESULTADO</div>
+    <div class="score-ring" id="scoreRing">
+      <svg viewBox="0 0 160 160"><circle class="bg-ring" cx="80" cy="80" r="68" /><circle class="score-arc" id="scoreArc" cx="80" cy="80" r="68" /></svg>
+      <div class="score-pct" id="scorePct">0%</div>
+    </div>
+    <div class="result-verdict" id="resultVerdict">APROVADO</div>
+    <div class="result-detail" id="resultDetail"></div>
+    <div class="result-breakdown">
+      <div class="rb-item good"><div class="rb-num" id="rbCorrect">0</div><div class="rb-label">Corretas</div></div>
+      <div class="rb-item bad"><div class="rb-num" id="rbWrong">0</div><div class="rb-label">Erradas</div></div>
+      <div class="rb-item"><div class="rb-num" id="rbBlank">0</div><div class="rb-label">Em branco</div></div>
+    </div>
+    <button class="review-toggle" onclick="reviewExam()">🔍 Revisar Questões</button>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn btn-outline" style="flex:1" onclick="goHome()">← Início</button>
+      <button class="btn btn-primary" style="flex:1" onclick="retryExam()">↺ Refazer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Finish confirm -->
+<div class="modal-overlay" id="finishModal">
+  <div class="modal">
+    <div class="modal-icon">⚠️</div>
+    <div class="modal-title">Finalizar Prova?</div>
+    <div class="modal-text" id="finishModalText">Você tem questões sem resposta. Deseja finalizar mesmo assim?</div>
+    <div class="modal-btns">
+      <button class="btn btn-outline" onclick="closeModal('finishModal')">Cancelar</button>
+      <button class="btn btn-primary" onclick="finishExam()">Finalizar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Time up -->
+<div class="modal-overlay" id="timeupModal">
+  <div class="modal">
+    <div class="modal-icon">⏱️</div>
+    <div class="modal-title">Tempo Esgotado!</div>
+    <div class="modal-text">O tempo da prova acabou. Veja seu resultado.</div>
+    <div class="modal-btns">
+      <button class="btn btn-primary" onclick="closeModal('timeupModal');finishExam()">Ver Resultado</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// DATA — All 13 provas
+// ============================================================
+// Answer keys for all 13 provas (0-indexed)
+const GABARITOS = [
+  // P1
+  [2,3,3,1,0,3,2,1,2,1,0,1,0,1,2,2,1,3,1,0,1,1,2,1,0,2,3,1,2,2,1,0,1,2,2,0,3,1,0,0],
+  // P2
+  [2,1,1,2,2,3,0,0,1,1,0,1,0,0,3,2,1,0,2,2,2,2,1,2,1,3,0,3,0,1,0,3,1,0,3,3,3,1,1,2],
+  // P3
+  [0,3,3,1,3,3,1,2,2,1,1,0,1,0,2,0,1,1,2,2,0,3,3,2,0,2,1,0,1,0,1,0,3,3,0,1,0,1,0,0],
+  // P4
+  [0,3,0,2,1,3,3,0,1,2,1,2,0,2,1,2,2,1,0,3,0,2,1,1,2,2,3,1,3,2,0,2,2,3,2,2,0,1,2,3],
+  // P5
+  [0,1,1,0,0,3,3,3,2,1,1,0,1,0,2,0,0,3,1,1,2,1,2,2,0,3,2,2,0,1,3,0,2,1,3,1,1,1,2,2],
+  // P6
+  [3,0,2,3,1,1,1,1,3,3,2,1,1,1,1,1,1,1,1,1,1,3,2,2,2,1,3,1,3,2,0,3,3,1,0,3,3,3,3,3],
+  // P7
+  [2,3,3,3,2,0,2,1,2,3,2,3,1,1,2,0,3,2,2,0,3,2,3,1,3,1,1,0,1,3,2,3,3,1,2,2,3,0,2,3],
+  // P8
+  [0,3,0,0,3,0,1,2,0,3,2,3,2,3,2,2,1,1,1,1,0,1,0,3,0,0,0,0,2,3,2,3,1,3,1,3,2,1,3,0],
+  // P9
+  [1,2,0,2,1,2,3,2,1,3,2,0,3,3,2,0,1,1,2,1,0,1,0,0,1,3,1,0,2,3,3,0,1,2,0,1,1,2,0,1],
+  // P10
+  [2,2,0,2,2,2,2,3,1,0,1,0,0,0,2,0,1,1,3,1,2,3,3,1,2,0,1,1,2,0,0,0,1,2,0,3,1,2,0,1],
+  // P11
+  [0,3,3,1,0,0,2,2,2,3,0,3,3,0,2,3,2,0,2,0,0,1,0,3,0,0,0,0,0,3,2,3,1,3,1,3,2,1,3,0],
+  // P12
+  [0,3,0,2,1,3,3,0,1,2,1,2,0,2,1,2,2,1,0,3,1,0,1,3,1,3,1,0,2,1,0,0,3,3,3,1,3,3,1,0],
+  // P13
+  [1,1,2,3,1,3,3,3,2,1,0,1,0,2,2,0,1,0,2,2,3,1,2,0,1,1,2,2,3,2,3,3,0,2,3,1,2,3,0,3],
+];
+
+function generateQuestoes(provaNum) {
+  const gabarito = GABARITOS[provaNum-1];
+  return Array.from({length:40},(_,i)=>({
+    p:`[Prova ${provaNum}] Questão ${i+1} — Consulte o material de estudo para o enunciado completo.`,
+    o:["Alternativa A","Alternativa B","Alternativa C","Alternativa D"],
+    r: gabarito ? (gabarito[i] < 4 ? gabarito[i] : 0) : 0
+  }));
+}
+
+const PROVAS = [
+{
+  titulo: "Prova 01",
+  questoes: [
+    {p:"A intensidade luminosa das lanternas e holofotes utilizados na inspeção submarina normalmente é medida em:",o:["Candela.","Velas.","Lux.","Watts."],r:2},
+    {p:"As operações de inspeção submarina, ensaio visual, são conduzidas com a utilização das seguintes técnicas:",o:["Ensaio visual direto p/ registros fotográficos.","Ensaio visual comparativo.","Ensaio visual p/ amostras emersas.","Ensaio visual direto e remoto."],r:3},
+    {p:"A inspeção submarina não tem como campo de aplicação nas plataformas de aço verificar:",o:["Risers.","Membros estruturais.","Leito marinho.","Catodos monitorados."],r:3},
+    {p:"Indique qual das afirmativas abaixo é verdadeira:",o:["Uma das funções do revestimento, no processo de soldagem com eletrodo revestido, é proteger a alma do eletrodo contra oxidação e evitar o sopro magnético.","No processo de soldagem Tig o calor necessário p/ a fusão é obtido através do arco elétrico entre um eletrodo de tungstênio não consumível.","O controle do ângulo de inclinação do eletrodo, no processo de soldagem com eletrodo revestido não é uma variável importante na obtenção de uma solda de boa qualidade.","Utilizando-se corrente alternada no processo de soldagem com eletrodo revestido, a polaridade é conhecida como alternada."],r:1},
+    {p:"'Durante o exame do leito marinho deve-se somente relatar a existência de sucata metálica.' Assinalar verdadeira ou falsa:",o:["Falsa.","Verdadeira."],r:0},
+    {p:"A deterioração manifestada na película ou sob esta, sob a forma e coloração características do enferrujamento existente, acompanhada ou não do desprendimento localizado da película, chama-se:",o:["Destacamento e corrosão.","Escamação de tinta.","Erosão e crateramento.","Enferrujamento de tinta."],r:3},
+    {p:"A inspeção do leito marinho, na região da jaqueta e proximidades, objetiva verificar:",o:["A ocorrência de abrasão ou assoreamento da estrutura.","A ocorrência de erosão ou assoreamento da estrutura.","Existem duas respostas certas.","A existência de sucatas."],r:2},
+    {p:"Qual das alternativas abaixo está relacionada com o vazio devido à contração na zona fundida:",o:["Trinca sob o cordão.","Rechupe de cratera.","Falta de fusão.","Mordedura."],r:1},
+    {p:"Na análise da deformação devida à soldagem de chapas em juntas de topo, sabe-se que:",o:["A contração transversal é diretamente proporcional a espessura da chapa.","A contração transversal é inversamente proporcional a abertura de raiz da junta.","A contração transversal é proporcional a área de seção transversal da zona fundida.","A contração transversal impede na abertura de raiz da junta."],r:2},
+    {p:"Assinale a alternativa correta:",o:["Junta dissimilar é a junta soldada cuja composição química da zona fundida difere significativamente do metal de base.","Margem da solda é a junção entre a face da solda e o metal de base.","Todas as afirmativas estão incorretas.","Solda dissimilar é a solda executada entre peças de composições químicas significativamente diferentes."],r:1},
+    {p:"Quando se detecta corrosão em um membro estrutural, deve-se classificar a corrosão e dimensionar por amostragem a profundidade dos pites quando for o caso. Assinalar verdadeiro ou falso:",o:["Verdadeira.","Falso."],r:0},
+    {p:"Indique entre os métodos citados abaixo qual não deve ser utilizado para a preparação de uma superfície que vai ser inspecionada visualmente:",o:["Raspagem","Martelete hidráulico.","Hidrojateamento.","Escovamento."],r:1},
+    {p:"A quebra da película de tinta com penetração até a superfície da estrutura pintada chama-se:",o:["Fendilhamento.","Erosão.","Desfolhamento.","Escamação."],r:0},
+    {p:"Qual dos instrumentos abaixo é empregado na verificação de espessura de incrustação:",o:["Paquímetro.","Estilete graduado.","Micrômetro.","Trena."],r:1},
+    {p:"Do ponto de vista de proteção contra choques, os cabos de alimentação de equipamentos elétricos:",o:["Nenhuma das respostas.","Não precisam de isolamento.","Precisam ser protegidos contra danos mecânicos.","Podem ter emendas."],r:2},
+    {p:"Qual das afirmativas abaixo, referentes ao processo de soldagem a arco submerso é falsa:",o:["Falta de penetração pode ser causada pelo alinhamento incorreto da máquina de solda com a junta a ser soldada.","Mordeduras são causadas quando se processa muito rapidamente.","Porosidades são causadas por altos teores de manganês no arame e no fluxo.","Falta de fusão pode ocorrer no caso da soldagem de uma peça espessa em um único passe."],r:2},
+    {p:"Os equipamentos elétricos utilizados em ensaio visual submarino devem ser hermeticamente fechados e as partes metálicas aterradas. Assinale falsa ou verdadeira:",o:["Falsa.","Verdadeira."],r:1},
+    {p:"Assinale a afirmativa errada:",o:["Solda heterogênea é a solda cuja composição química da zona fundida difere significativamente do metal de base.","Solda autógena é a solda de fusão sem participação de metal de adição.","Solda de topo é a solda executada em junta de topo.","Solda de aresta é a solda executada no bisel de um chanfro para reconstituir a forma original da peça antes da execução do chanfro."],r:3},
+    {p:"Os equipamentos elétricos utilizados em ensaio visual submarino quando ligados à rede, o circuito deverá ser protegido contra curto circuito por fusíveis e disjuntores. Assinale falsa ou verdadeira:",o:["Falsa.","Verdadeira."],r:1},
+    {p:"O ensaio visual é o ensaio não destrutivo de mais baixo custo, logo independe da experiência por parte do inspetor. Assinale verdadeiro ou falso:",o:["Falsa.","Verdadeira."],r:0},
+    {p:"Assinale a descrição correta de corrosão alveolar:",o:["Cavidade na superfície metálica apresentando o fundo arredondado e profundidade geralmente maior que o seu diâmetro.","Cavidade na superfície metálica apresentando o fundo arredondado e profundidade geralmente menor que seu diâmetro.","Cavidade na superfície metálica apresentando o fundo em forma angular e profundidade geralmente menor que seu diâmetro.","Cavidade na superfície metálica apresentando o fundo em forma angular e profundidade igual ao seu diâmetro."],r:1},
+    {p:"Na laminação de uma chapa de aço o metal ao passar entre os cilindros do laminador, sofre deformação:",o:["Plástica, a espessura permanece e o comprimento e a largura são aumentados.","Plástica, a espessura é reduzida, o comprimento e a largura são aumentados.","Elástica, a espessura permanece constante e o comprimento e largura são aumentados.","Elástica, a espessura é reduzida, o comprimento é aumentado e a largura permanece constante."],r:1},
+    {p:"Qual das descontinuidades abaixo se situa no metal de base:",o:["Falta de penetração.","Concavidade.","Trinca interlamelar.","Trinca na raiz."],r:2},
+    {p:"1-Contraventamento é o elemento destinado a enrijecer a estrutura principal. 2-A ramificação é uma das partes do contraventamento. Assinale se as alternativas abaixo são verdadeira ou falsas:",o:["1F;2F","1V;2V","1F;2V","1V;2F"],r:1},
+    {p:"Indique a descrição correspondente: 1-Câmara de cabeça de poço; 2-Monobóia de amarração; 3-Religação; 4-Gabarito. ( )Estrutura instalada no solo marinho que serve de guia para perfuração de poços. ( )Sistema de amarração por ponto único. ( )Vasos que ficam no fundo do mar e contém as árvores de natal.",o:["4;2;1","1;2;4","1;3;4","Nenhuma das respostas."],r:0},
+    {p:"Assinale dentre as alternativas abaixo, uma limitação do ensaio visual em comparação a outros ensaios:",o:["Pode ser executado em juntas de geometria complexa, como nas de estruturas tubulares.","É limitado a materiais magnéticos e não magnéticos, permite locar e dimensionar as descontinuidades internas no metal de base.","É limitado a detecção de descontinuidades superficiais.","Depende grandemente da experiência e conhecimento de soldagem por parte do inspetor."],r:2},
+    {p:"Como deve ser descrito o estado de corrosão de uma plataforma que após a preparação da superfície apresenta algumas cavidades de ângulo agudo espalhadas aleatoriamente:",o:["Corrosão alveolar severa aleatória.","Corrosão alveolar leve dispersa.","Corrosão por pites leve generalizada.","Corrosão por pites leve dispersa."],r:3},
+    {p:"No ensaio visual, a classificação de corrosão quanto a forma pode ser:",o:["Crítica, moderada ou superficial.","Alveolar, pitiforme, uniforme.","Leve, média, severa.","Localizada, generalizada."],r:1},
+    {p:"Indique a associação correta entre: 1-Medição; 2-Iluminação; 3-Registro; 4-Qualificação de proc. de inspeção visual; 5-Inspetor. A-Máquina fotográfica; B-Grau de resolução da imagem; C-Acuidade visual; D-Fita métrica; E-Luximetro.",o:["1E-2A-3B-4D-5C","1C-2B-3E-4D-5A","1D-2E-3A-4B-5C","1B-2E-3C-4A-5D","1E-2A-3B-4C-5D"],r:2},
+    {p:"Na inspeção submarina, ensaio visual, podemos utilizar como meios auxiliares:",o:["Moldes em epóxi.","Trena.","Todas as alternativas estão certas.","Medidor de pites.","Máquina fotográfica."],r:2},
+    {p:"Quando se deseja realçar imperfeições superficiais, a incidência do feixe luminoso deve ser oblíqua em relação à superfície para que se note o efeito de luz e sombra. Assinalar verdadeira ou falsa:",o:["Falsa.","Verdadeira."],r:1},
+    {p:"Qual dos seguintes requisitos não é suficiente na inspeção visual submarina:",o:["Luminosidade de 100 lux.","Acuidade visual próxima Jaeger 1.","Acuidade visual longínqua Snellen 20/20.","Visibilidade da água do mar de 5 metros."],r:0},
+    {p:"Trinca é uma descontinuidade linear, podendo se apresentar na superfície, que não põe em risco a estrutura. Assinalar falsa ou verdadeira:",o:["Verdadeira.","Falsa."],r:1},
+    {p:"Dobras de forjamento são causadas por:",o:["Subaquecimento do material.","Rebarba excessiva.","Dobras de metal comprimidas contra superfície da peça.","Carepas de óxido incrustadas profundamente na superfície."],r:2},
+    {p:"Qual dos instrumentos abaixo, empregado na inspeção visual subaquática, deve sofrer uma aferição periódica por instituições credenciadas:",o:["Lanterna.","Holofote.","Trena.","Máquina fotográfica.","Lupa."],r:2},
+    {p:"Assinale a afirmativa correta:",o:["Nenhuma resposta é correta.","Camada é o depósito obtido com um único passe.","Porosidade alongada é causada pelo eletrodo de tungstênio.","Zona afetada termicamente é a porção do metal de base que sofreu apenas fusão parcial durante a soldagem."],r:0},
+    {p:"As principais partes de um nó são: 1-Tronco (can); 2-Contraventamento (bracing); 3-Cone; 4-Ramificação (stub); 5-Corda.",o:["1;2;4","1;2;3;4;5","1;2;3;4","1;4","1;3;4"],r:3},
+    {p:"A inspeção do leito marinho deve se prender somente à região interna da jaqueta. Assinalar se a afirmativa é verdadeira ou falsa:",o:["Verdadeira.","Falsa."],r:1},
+    {p:"A definição de coletor (manifold) corresponde a um conjunto de tubos interligando diversas linhas de chegada com uma ou mais saídas, contendo válvulas e instrumentos para controle do fluxo de fluídos. Diga se é verdadeira ou falsa:",o:["Verdadeira.","Falsa."],r:0},
+    {p:"Qual das alternativas abaixo apresenta os instrumentos normalmente usados na inspeção visual submarina de anodos:",o:["Raspadeira manual, escova manual, trena e estilete graduado.","Régua, lanterna e estilete graduado.","Paquímetro, trena e lupa.","Odômetro, estilete graduado e raspadeira."],r:0},
+  ]
+},
+{
+  titulo: "Prova 02",
+  questoes: [
+    {p:"O tubo que liga a plataforma fixa de produção aos dutos submarinos e que normalmente são colocados na parte externa das jaquetas sendo fixados por um suporte e guiado por braçadeiras é:",o:["Tubo I.","Condutor articulado (Mariner riser).","Duto de interligação (riser).","Tubo coletor de óleo (sump)."],r:2},
+    {p:"Como deve ser descrito o estado de corrosão de uma superfície metálica que apresenta em toda a sua extensão cavidades de fundo em forma angular e de profundidade maior que seu diâmetro:",o:["Corrosão p/ pites severa localizada.","Corrosão p/ pites severa generalizada.","Corrosão alveolar severa generalizada.","Corrosão por cavidade angular."],r:1},
+    {p:"Na preparação de superfície para exame visual submarino não deve ser utilizado:",o:["Raspadeiras manuais.","Martelete de agulhas.","Escova pneumática.","Jato d'água com alta pressão."],r:1},
+    {p:"A formação de bolhas associada ao enferrujamento de uma superfície pintada deve ser relatada como:",o:["Desfolhamento e corrosão.","Embolhamento e erosão.","Empolamento com enferrujamento.","Crateramento e rachamento."],r:2},
+    {p:"Assinale a afirmativa errada:",o:["Solda de topo é solda executada em uma junta de topo.","Solda heterogênea é a solda cuja composição química da zona fundida difere significativamente do metal de base.","Solda autógena é a solda de fusão sem participação de metal de base.","Solda de aresta é a solda executada no bisel de um chanfro para reconstituir a forma original da peça antes da execução do chanfro."],r:2},
+    {p:"Quais são as atividades que devem ser verificadas no exame visual de anodos: 1-Verificação da fixação; 2-Verificação dimensional; 3-Medição do potencial; 4-Classificação do estado físico; 5-Verificação da composição química.",o:["1;3;5","Todas as alternativas devem ser verificadas.","1;2;3","1;2;4"],r:3},
+    {p:"Assinale a afirmativa correta:",o:["A aferição de instrumentos é a comparação com os seus respectivos padrões para conhecer seus erros.","A aferição dos instrumentos deve ser feita todo dia no início das atividades de inspeção visual.","A aferição de instrumentos é uma atividade de verificação do funcionamento dos instrumentos.","Os dados de ajustes dos instrumentos executado durante a aferição devem ser registrados."],r:0},
+    {p:"São defeitos visuais encontrados na inspeção em serviços de mangotes marítimos:",o:["Abrasão, arame exposto, corte, saliência, dobramento excessivo, saliência e reentrância longitudinal, vestígio de vazamento de óleo.","Falta de sinalização, corrosão na capa externa, amassamento, mossas por impacto de sucata, incrustação.","Penetração insuficiente nos passes de soldagem da raiz, cisalhamento de revestimento, anodos gastos, roscas espanadas.","Espessuras reduzidas, corrosão excessiva, trincas, inclusão de escória, proteção catódica deficiência."],r:0},
+    {p:"Qual das afirmativas abaixo, referentes ao processo de soldagem com o eletrodo revestido é falsa:",o:["Uma das causas da ocorrência de falta de penetração é a técnica inadequada de soldagem.","Trinca interlamelar é frequentemente causada pela inabilidade do soldador.","Uma das causas do aparecimento de falta de fusão é a corrente inadequada de soldagem.","Inclusão de escória é frequentemente provocada pela manipulação inadequada do eletrodo."],r:1},
+    {p:"Ensaio visual é o ensaio não destrutivo básico. Todos os outros ensaios não destrutivos devem ser executados após um bom ensaio visual, que pode ser feito a vista desarmada, com auxílio de lupa ou com aparelho ou instrumento para exame remoto. Assinale verdadeiro ou falso:",o:["Falsa.","Verdadeira."],r:1},
+    {p:"Assinale dentre as alternativas abaixo, a descontinuidade que não é detectada na inspeção visual subaquática:",o:["Dupla laminação.","Concavidade.","Falta de fusão.","Convexidade."],r:0},
+    {p:"Quando toda superfície metálica apresenta cavidades com o fundo arredondado e com diâmetro inferior a 10mm, como deve ser descrito este estado de corrosão:",o:["Corrosão alveolar severa superficial.","Corrosão alveolar tipo II generalizada.","Corrosão pitiforme leve generalizada.","Corrosão alveolar tipo II localizada."],r:1},
+    {p:"Os equipamentos elétricos utilizados em ensaio visual subaquático:",o:["Devem ter proteção contra choque.","As extremidades dos cabos de alimentação devem permitir a separação dos fios individuais.","Devem ter punhos metálicos.","Devem ter bastante emendas para facilitar a manutenção."],r:0},
+    {p:"Dentre os instrumentos auxiliares indicados abaixo assinale aquele que é normalmente empregado na inspeção visual subaquática:",o:["Lanterna.","Lupa com iluminação própria.","Espelho convexo.","Luxímetro."],r:0},
+    {p:"Indique qual das afirmativas abaixo é a correta:",o:["Consumível é todo o material empregado na deposição e que se funde originando uma solda.","Consumível é todo o material empregado apenas na proteção da solda.","Consumível é todo material que se funde originando uma solda.","Consumível é todo o material empregado na deposição ou proteção da solda."],r:3},
+    {p:"O revestimento de massa epóxi se caracteriza por:",o:["Ter como defeito característico o empolamento.","Pode ser aplicado por trincha em várias mãos.","Ser um revestimento de grande espessura, alta dureza e resistência mecânica.","Sofrer gretamento quando em superfície submersa."],r:2},
+    {p:"A capacidade de resolução do ensaio visual pelo método remoto deverá ser maior que o direto, pois utiliza equipamentos mais sofisticados. Assinale verdadeira ou falsa:",o:["Verdadeira.","Falsa."],r:1},
+    {p:"No processo de soldagem com eletrodo revestido, a escória que se forma na superfície da solda influencia a taxa de resfriamento do metal de solda depositada. Verdadeira ou falsa:",o:["Verdadeira.","Falsa."],r:0},
+    {p:"Assinale dentre as alternativas abaixo, a descontinuidade ou irregularidade não detectada para inspeção visual subaquática:",o:["Sinais de erosão ou assoreamento.","Presença de corrosão.","Trinca interlamelar.","Estado de fixação dos anodos."],r:2},
+    {p:"Assinale qual das alternativas abaixo representa a quantidade mínima recomendável de luminosidade para inspeção visual subaquática de detalhes:",o:["100 lux.","2000 lux.","600 lux.","300 lux."],r:2},
+    {p:"São recursos da inspeção visual subaquática:",o:["Partículas magnéticas fluorescentes.","Todas as alternativas são corretas.","Fotografia e televisionamento.","Medição de potencial e espessura."],r:2},
+    {p:"Rechupe numa peça fundida é causado pela:",o:["Retenção de gases no líquido devido ao aumento da sua viscosidade para queda de temperatura.","Quebra do molde de areia.","Contração de volume que ocorre durante a passagem do estado líquido para o sólido.","Inclusão de escória."],r:2},
+    {p:"Na inspeção subaquática, ensaio visual, podemos utilizar como meios auxiliares:",o:["Medidor de pites.","Todas as alternativas corretas.","Máquina fotográfica.","Trena."],r:1},
+    {p:"A inspeção subaquática, ensaio visual, não tem como objetivo na inspeção de plataformas de aço verificar:",o:["Verificar o estado do revestimento.","Existência de danos mecânicos tais como empenos, furos, cortes, amassamentos, abrasão ou qualquer outro tipo registrando dimensões e posicionamento.","Verificar a espessura das juntas tubulares nas pernas da plataforma.","A presença de corrosão, classificando."],r:2},
+    {p:"Qual das afirmativas abaixo não é aplicável ao processo de soldagem com eletrodo revestido:",o:["É possível soldar em todas as posições.","A qualidade da solda independe da habilidade do soldador.","É aplicável em locais de difícil acesso.","É possível soldar todos os tipos de chanfros."],r:1},
+    {p:"No processo manual com eletrodo revestido a proteção da poça de fusão deve-se:",o:["Baixa pressão dos gases gerado no arco elétrico.","Ao óxido de ferro formado na superfície do metal líquido.","A elevada temperatura do arco elétrico.","A decomposição do revestimento do eletrodo."],r:3},
+    {p:"Entende-se por zona de transição (splash zone) a parte da estrutura que, embora não esteja sempre submersa, está sujeita a ficar molhada temporariamente devido à ação da onda, variação de maré e respingos. Verdadeiro ou falso:",o:["Verdadeiro.","Falso."],r:0},
+    {p:"O tubo que vai desde o convés inferior de perfuração das plataformas semissubmersíveis ou navios-sonda até a cabeça do poço, no fundo do mar, onde a sua parte inferior é fixada através de uma junta esférica e um conector hidráulico chama-se:",o:["Condutor articulado (mariner riser).","Tubo I.","Casing.","Tubo J."],r:3},
+    {p:"Mordedura é uma descontinuidade localizada na margem da solda criando entalhe mecânico na região de fusão favorecendo o aparecimento de trincas devido à concentração de tensões podendo causar falha na estrutura. Assinalar falsa ou verdadeira:",o:["Verdadeira.","Falsa."],r:0},
+    {p:"Quais das descontinuidades abaixo seriam detectadas em juntas circunferenciais de tubulação, soldadas pelo lado externo pelo processo manual com eletrodo revestido e inspecionadas visualmente pelo lado interno:",o:["Porosidade agrupada, falta de fusão, mordedura e desalinhamento.","Trinca transversal, mordedura na raiz, penetração excessiva e deposição insuficiente.","Embicamento, concavidade, falta de fusão e rechupe de cratera.","Concavidade, falta de fusão, falta de penetração, penetração excessiva."],r:1},
+    {p:"As atividades de inspeção visual de erosão e ou assoreamento do leito marinho, revestimento flecha máxima entre vãos livres danos mecânicos e anodos, se aplicam em:",o:["Dutos de aço para transporte de petróleo.","Estruturas de plataformas de concreto.","Mangotes marítimos flutuantes.","Sistema de amarração c/ bóias."],r:0},
+    {p:"Assinale a afirmativa errada, quanto aos princípios da inspeção subaquática, ensaio visual:",o:["O ensaio visual é o ensaio não destrutivo básico.","Todos os outros ensaios não destrutivos devem ser executados após um bom ensaio visual.","O ensaio visual se aplica de uma maneira geral, na detecção de irregularidades superficiais.","Nenhuma das respostas."],r:3},
+    {p:"O ensaio visual direto só deverá ser realizado quando o acesso é suficiente para que a vista se localize a uma distância:",o:["Superior a 600mm em relação à superfície a ser examinada","Não superior a 600mm em relação à superfície a ser examinada","Nenhuma das alternativas.","Não superior a 700mm em relação à superfície a ser examinada e um ângulo não inferior a 30 graus, em relação à mesma superfície."],r:1},
+    {p:"Quando são visíveis alguns alvéolos de pequena profundidade espalhados aleatoriamente pela superfície metálica, como deve ser descrito este estado de corrosão:",o:["Corrosão alveolar dispersa.","Corrosão por pites aleatória.","Corrosão alveolar aleatória.","Corrosão alveolar severa."],r:0},
+    {p:"No processo de soldagem com eletrodo revestido, quando se diz que a soldagem é com polaridade inversa significa que:",o:["A peça está ligada ao polo positivo da máquina de solda.","O eletrodo está ligado ao polo negativo da máquina de solda.","A corrente usada é alternada.","O eletrodo está ligado ao positivo da máquina de solda."],r:3},
+    {p:"Os ensaios visuais demandam meios auxiliares e complementares para sua execução. Citamos a utilização de:",o:["Partícula magnética.","Aparelho de medição e espessura.","Líquido penetrante","Odômetro de fundo."],r:3},
+    {p:"Dentre os aparelhos de medição indicados abaixo, assinale aquele que não é normalmente empregado na inspeção visual subaquática:",o:["Trena.","Fita métrica.","Régua graduada.","Micrômetro de profundidade."],r:3},
+    {p:"O processo de soldagem a arco submerso utiliza o calor gerado para:",o:["Fundir o arame e o fluxo que juntamente com o gás de proteção, normalmente argônio, protegem a poça de fusão.","Fundir o metal de base, o arame e o fluxo cuja função é a de proteger a poça de fusão.","Fundir o fluxo e este fundir o arame.","Fundir o arame, sendo que a poça de fusão é protegida pelo gás inerte, normalmente o argônio."],r:1},
+    {p:"A mistura de alcatrão de hulha com resina epóxi que tem excelente desempenho quando imersa em água é chamada de:",o:["Silicato inorgânico de zinco.","Coaltar-epóxi","Zarcão com primer epoxídico","Zarcão misto – epóxi."],r:1},
+    {p:"Quais os processos de soldagem aplicáveis a soldagem hiperbárica a seco:",o:["Tig, mig e mag.","Tig, mig, e eletrodo revestido.","Mig com arame tubular, tig e eletrodo revestido.","Mig, eletrodo revestido e eletro-gás."],r:2},
+  ]
+},
+{
+  titulo: "Prova 03",
+  questoes: [
+    {p:"Os cabos de alimentação de equipamentos, utilizados em ensaio visual submarino podem ter emendas ou derivações de modo a facilitar o manuseio:",o:["Falsa","Verdadeira"],r:0},
+    {p:"Assinale a afirmativa errada:",o:["Face de fusão é a superfície do metal de base que será fundida na soldagem.","A face da solda é a superfície exposta da solda, pelo lado onde a solda foi executada.","Geometria da junta é a forma e dimensões da seção transversal de uma junta após soldagem.","Solda em ângulo é a solda de seção transversal aproximadamente triangular executada em juntas aproximadamente em ângulo reto."],r:3},
+    {p:"No processo de soldagem com eletrodo revestido, quando se diz que a soldagem é com polaridade inversa, significa que:",o:["A peça está ligada ao polo positivo da máquina de solda.","O eletrodo está ligado ao polo negativo da máquina de solda.","A corrente usada é alternada.","O eletrodo está ligado ao polo positivo da máquina de solda."],r:3},
+    {p:"Assinale a alternativa errada:",o:["Solda heterogênea é a solda cuja composição química da zona fundida difere significativamente do(s) metal(ais) base.","Solda de aresta é a solda executada no bisel de um chanfro para reconstituir a forma original da peça antes da execução do chanfro.","Solda autógena é a solda de fusão sem participação de metal de adição."],r:1},
+    {p:"Os ensaios visuais demandam meios auxiliares e complementares para sua execução. Citamos a utilização de:",o:["Partículas magnéticas.","Aparelho de medição de espessura.","Líquido penetrante.","Raspadeira e escova manual."],r:3},
+    {p:"Qual das alternativas abaixo apresenta os instrumentos normalmente usados na inspeção visual subaquática de anodos:",o:["Estilete graduado, régua e fibroscópio.","Paquímetro, lupa e lanterna.","Régua, lanterna e estilete graduado.","Régua, estilete graduado e fita métrica."],r:3},
+    {p:"Do ponto de vista de proteção contra choques, os cabos de alimentação de equipamentos:",o:["Nenhuma das respostas.","Ser protegidos contra danos mecânicos acidentais.","Não precisam ter isolamento resistente a umidade.","Devem possuir emendas para facilitar a manutenção."],r:1},
+    {p:"Dentre as descontinuidades citadas abaixo qual não pertence a peças fundidas:",o:["Gota fria.","Segregação.","Dupla laminação.","Rabo de rato."],r:2},
+    {p:"A inspeção do leito marinho, na região da jaqueta e proximidades, objetiva verificar:",o:["A ocorrência de erosão ou assoreamento da estrutura.","A ocorrência de abrasão ou assoreamento da estrutura.","Existem duas respostas corretas.","A existência de sucatas."],r:2},
+    {p:"'A inspeção do leito marinho deve se prender somente à região interna da jaqueta.' Assinalar se a afirmativa é verdadeira ou falsa:",o:["Verdadeira.","Falsa."],r:1},
+    {p:"Qual das alternativas abaixo não corresponde a descontinuidades encontradas em forjados e laminados:",o:["Dupla laminação.","Rabo de rato.","Lasca.","Dobra de forjamento."],r:1},
+    {p:"Trinca localizada geralmente no metal de base em forma de degraus:",o:["Trinca interlamelar.","Trinca ramificada.","Trinca irradiante.","Trinca longitudinal."],r:0},
+    {p:"Quando se deseja realçar imperfeições superficiais, a incidência do feixe luminoso deve ser oblíqua em relação à superfície para que se note o efeito de luz e sombra. Assinalar verdadeira ou falsa:",o:["Falsa.","Verdadeira."],r:1},
+    {p:"Na inspeção do leito marinho deve ser relatado a natureza do solo, o perfil de assoreamento e erosão e a presença de danos mecânicos. Assinalar se a afirmativa é verdadeira ou falsa:",o:["Verdadeira.","Falsa."],r:0},
+    {p:"A trinca de fadiga também é conhecida como:",o:["Trinca a quente.","Trinca transversal.","Trinca longitudinal.","Trinca interlamelar."],r:2},
+    {p:"Assinale a alternativa correta:",o:["Margem da solda é a junção entre a face da solda e o metal de base.","Todas as afirmativas estão incorretas.","Junta dissimilar é a junta soldada cuja composição química da zona fundida difere significativamente do metal de base.","Solda dissimilar é a solda executada entre peças de composição química significativamente diferentes."],r:0},
+    {p:"Qual das alternativas abaixo, referentes ao processo de soldagem com eletrodo revestido é falsa:",o:["Uma das causas da ocorrência de falta de penetração é a técnica inadequada de soldagem.","Trinca interlamelar é frequentemente causada pela inabilidade do soldador.","Inclusão de escória são frequentemente provocadas pela manipulação inadequada dos eletrodos.","Uma das causas do aparecimento da falta de fusão é a corrente inadequada de soldagem."],r:1},
+    {p:"De acordo com a norma, trinca é uma descontinuidade tridimensional produzida por uma ruptura local do material. Verdadeiro ou Falso:",o:["Falso.","Verdadeiro."],r:1},
+    {p:"Dobras de forjamento são causadas por:",o:["Subaquecimento do material.","Rebarba excessiva.","Dobras de metal comprimidas contra a superfície da peça.","Carepas de óxido incrustadas profundamente na superfície."],r:2},
+    {p:"Qual dos instrumentos abaixo empregados na inspeção visual subaquática deve sofrer uma aferição periódica por instituições credenciadas:",o:["Lanterna.","Holofote.","Fita métrica.","Máquina fotográfica.","Lupa."],r:2},
+    {p:"Assinale a afirmativa correta:",o:["Nenhuma das respostas é correta.","Camada é o depósito obtido com um único passe.","Porosidade alongada é causada pelo eletrodo de tungstênio.","Zona afetada termicamente é a porção do metal de base que sofreu apenas fusão parcial durante a soldagem.","Solda de aresta é sinônimo de solda em ângulo."],r:0},
+    {p:"A deterioração manifestada na película ou sob esta, sob a forma e coloração característica do enferrujamento existente, acompanhada ou não do desprendimento localizado da película, chama-se:",o:["Descascamento e corrosão.","Escamação de tinta.","Erosão e crateramento.","Enferrujamento de tinta."],r:3},
+    {p:"Excesso de metal da zona fundida sobreposto ao metal de base na margem da solda, sem estar fundido ao metal de base. Essa descontinuidade é chamada de:",o:["Rechupe de cratera.","Respingo.","Abertura de arco.","Sobreposição."],r:3},
+    {p:"Depressão sob forma de entalhe, localizado no metal de base acompanhando a margem da solda. Essa descontinuidade é chamada de:",o:["Trinca.","Deposição insuficiente.","Mordedura.","Nenhuma das respostas."],r:2},
+    {p:"Qual dos seguintes requisitos não é suficiente na inspeção visual subaquática:",o:["Luminosidade de 100 lux.","Acuidade visual próxima Jaeger 1.","Acuidade visual longínqua Snellen 20/20.","Visibilidade da água do mar de 5 metros."],r:0},
+    {p:"Imperfeição local na superfície do metal de base resultante da abertura do arco elétrico. Essa descontinuidade é chamada de:",o:["Falta de penetração.","Falta de fusão.","Abertura de arco.","Respingo."],r:2},
+    {p:"Das descontinuidades: I-mordedura; II-inclusão de escória entre camadas; III-porosidade interna; IV-deposição insuficiente; V-sobreposição. Quais são as detectadas no exame visual de soldas:",o:["II e III.","I, IV e V.","I e V.","III, IV e V.","I e IV."],r:1},
+    {p:"Os equipamentos elétricos utilizados em ensaio visual submarino devem ser hermeticamente fechados e as partes metálicas aterradas. Assinale falsa ou verdadeira:",o:["Verdadeira.","Falsa."],r:0},
+    {p:"Glóbulos parcialmente incorporados à superfície da peça, provenientes de respingos de metal líquido nas paredes do molde. Essa descontinuidade de fundidos é chamada de:",o:["Inclusão.","Gota fria.","Inclusão de areia.","Metal frio."],r:1},
+    {p:"Na inspeção subaquática por ensaio visual podemos utilizar como meio auxiliar:",o:["Todas as alternativas estão corretas.","Moldes em epóxi.","Medidor de pites.","Trena.","Máquina fotográfica."],r:0},
+    {p:"Ensaio visual é o ensaio não destrutivo básico. Todos os outros ensaios não destrutivos devem ser executados após um bom ensaio visual... Assinale verdadeiro ou falso:",o:["Falsa.","Verdadeiro."],r:1},
+    {p:"Assinale dentre as alternativas abaixo, a descontinuidade que não é detectada na inspeção subaquática por ensaio visual:",o:["Dupla laminação.","Concavidade.","Falta de fusão.","Convexidade."],r:0},
+    {p:"Depressão na superfície da peça causada por ondulações ou falhas na superfície do molde:",o:["Segregação.","Rechupe.","Queda de bolo.","Rabo de rato."],r:3},
+    {p:"Descontinuidade na superfície da peça, tendo a aparência de um vinco, causada por movimentação ou trinca do molde de areia:",o:["Poros.","Cavidade alongada.","Falta de penetração.","Veio."],r:3},
+    {p:"Saliência superficial constituída de inclusão de areia, recoberta por fina camada de metal poroso:",o:["Crosta.","Desencontro.","Rechupe.","Chupagem."],r:0},
+    {p:"A formação de bolhas associada ao enferrujamento de uma superfície pintada deve ser relatada como:",o:["Desfolhamento e corrosão.","Empolamento com enferrujamento.","Embolhamento e erosão.","Crateramento e rachamento."],r:1},
+    {p:"Assinale a alternativa correta:",o:["A aferição de instrumentos é a comparação com seus respectivos padrões para conhecer seus erros.","A aferição dos instrumentos deve ser feita todo dia no início das atividades de inspeção visual.","A aferição de instrumentos é uma atividade de verificação do funcionamento dos instrumentos.","Os dados de ajuste dos instrumentos executado durante a aferição devem ser registrados."],r:0},
+    {p:"Indique qual das afirmativas abaixo é verdadeira:",o:["Uma das funções do revestimento no processo de soldagem com eletrodo revestido, é proteger a alma do eletrodo.","No processo de soldagem Tig o calor necessário para a fusão é obtido através do arco elétrico entre um eletrodo de tungstênio não consumível e a peça.","O controle do ângulo de inclinação do eletrodo, no processo de soldagem com eletrodo revestido não é uma variável importante na obtenção de uma solda de boa qualidade.","Utilizando-se corrente alternada no processo de soldagem com eletrodo revestido, a polaridade é conhecida como alternada."],r:1},
+    {p:"Durante o exame do leito marinho deve-se somente relatar a existência de sucata metálica. Assinale verdadeira ou falsa:",o:["Falsa.","Verdadeira."],r:0},
+    {p:"Os equipamentos elétricos utilizados em ensaio visual submarino... Assinale a alternativa correta:",o:["Devem ter proteção contra choques.","Devem possuir alta amperagem.","As extremidades dos cabos de alimentação devem permitir a separação dos fios individuais.","Podem ter punho metalizado."],r:0},
+  ]
+},
+{
+  titulo: "Prova 04",
+  questoes: [
+    {p:"Dentre os instrumentos auxiliares indicados abaixo, assinale aquele que é normalmente empregado na inspeção visual subaquática:",o:["Lanterna.","Lupa com iluminação própria.","Espelhos convexos.","Luxímetro."],r:0},
+    {p:"Indique qual das afirmativas abaixo é a correta:",o:["Consumível é todo o material empregado na deposição e que funde-se originando uma solda.","Consumível é todo o material empregado apenas na proteção da solda.","Consumível é todo o material que funde-se originando uma solda.","Consumível é todo o material empregado na deposição ou proteção da solda."],r:3},
+    {p:"Trinca com direção aproximadamente paralela ao eixo longitudinal do cordão de solda, podendo estar localizada na zona fundida, na zona de ligação, na ZTA ou no metal de base:",o:["Trinca longitudinal.","Trinca transversal.","Trinca ramificada.","Trinca irradiante."],r:0},
+    {p:"Do ponto de vista de proteção contra choques, os cabos de alimentação de equipamentos:",o:["Não precisam ter isolamento resistente a umidade.","Nenhuma das respostas.","Ser protegidos contra danos mecânicos acidentais.","Devem utilizar alta amperagem."],r:2},
+    {p:"O processo de soldagem a arco submerso utiliza o calor gerado para:",o:["Fundir o arame e o fluxo que juntamente com o gás de proteção, normalmente argônio, protegem a poça de fusão.","Fundir o metal de base, o arame e o fluxo cuja função é a de proteger a poça de fusão.","Fundir o fluxo e este fundir o arame.","Fundir o arame, sendo que a poça de fusão é protegida pelo gás inerte, normalmente argônio."],r:1},
+    {p:"Dentre os instrumentos de medição indicados abaixo, assinale aquele que não é normalmente empregado na inspeção visual subaquática:",o:["Trena.","Fita métrica.","Régua graduada.","Micrômetro de profundidade."],r:3},
+    {p:"Assinale a afirmativa errada, quanto aos princípios da inspeção subaquática - ensaio visual:",o:["O ensaio visual é o ensaio não destrutivo básico.","Todos os outros ensaios não destrutivos devem ser executados após um bom ensaio visual.","O ensaio visual se aplica de uma maneira geral, na detecção de irregularidades superficiais.","Nenhuma das respostas."],r:3},
+    {p:"Glóbulos de metal de adição transferidos durante a soldagem e aderidos à superfície do metal de base ou à zona fundida já solidificada:",o:["Respingo.","Mordedura.","Inclusão de escória.","Rechupe."],r:0},
+    {p:"Envoltório de gás que circunda a parte a ser soldada, com a finalidade de proteger a peça de fusão:",o:["Atmosfera oxidante.","Atmosfera protetora.","Atmosfera ionizante.","Atmosfera hiperbárica"],r:1},
+    {p:"A inspeção subaquática – ensaio visual – não tem como objetivo na inspeção de plataformas de aço verificar:",o:["Verificar o estado do revestimento.","Existência de danos mecânicos tais como empenos, furos, cortes, amassamentos, abrasão ou qualquer outro tipo, registrando dimensões e posicionamento.","Verificar a espessura das juntas tubulares nas pernas da plataforma.","A presença de corrosão, classificando-a."],r:2},
+    {p:"O revestimento de massa epóxi pode apresentar que tipo de defeitos:",o:["Gretamento e bolhas.","Descolamento, rachamento e empolamento.","Corrosão biológica e eletroquímica.","Escamação e casca de laranja.","Descoloração e empolamento com ferrugem."],r:1},
+    {p:"Abertura devidamente preparada, na superfície de uma peça ou entre 2 componentes, para conter a solda:",o:["Rechupe.","Enchimento incompleto.","Chanfro.","Camada."],r:2},
+    {p:"Indique a descrição correspondente: 1-Câmara de cabeça de poço; 2-Monobóia de amarração; 3-Religação; 4-Gabarito. ( )Estrutura instalada no solo marinho que serve de guia para perfuração de poços. ( )Sistema de amarração por ponto único. ( )Vasos que ficam no fundo do mar e contém as árvores de natal.",o:["4, 2 e 1.","1, 2 e 4.","1, 3 e 4.","Nenhuma das respostas."],r:0},
+    {p:"Assinale qual das alternativas abaixo representa a quantidade mínima recomendável de luminosidade para inspeção visual subaquática de detalhes:",o:["100 lux.","2000 lux.","600 lux.","1300 lux.","1500 lux."],r:2},
+    {p:"Junta constituída por componentes, cujas composições químicas dos metais de base diferem significativamente entre si:",o:["Junta de aresta.","Junta dissimilar.","Solda dissimilar.","Junta de ângulo."],r:1},
+    {p:"São recursos da inspeção visual subaquática:",o:["Partículas magnéticas fluorescentes.","Todas as alternativas são corretas.","Fotografia e televisionamento.","Medição de potencial eletroquímico."],r:2},
+    {p:"Rechupe, numa peça fundida, é causado pela:",o:["Retenção de gases no líquido devido ao aumento da sua viscosidade pela queda de temperatura.","Quebra do molde de areia.","Contração de volume que ocorre durante a passagem do estado líquido para o sólido.","Inclusão de escória."],r:2},
+    {p:"Qual das afirmativas abaixo não é aplicável ao processo de soldagem com eletrodo revestido:",o:["É possível soldar em todas as posições.","A qualidade da solda independe da habilidade do soldador.","É aplicável em locais de difícil acesso.","É possível soldar todos os tipos de chanfros."],r:1},
+    {p:"Do ponto de vista de proteção contra choques, os cabos de alimentação de equipamentos:",o:["Ser protegidos contra danos mecânicos acidentais.","Nenhuma das respostas.","Não precisam ter isolamento resistente a umidade.","Devem ter uma amperagem muito alta."],r:0},
+    {p:"Operação pela qual se forma um bisel ou um chanfro através de remoção de material:",o:["Abertura do arco elétrico com corrente alternada.","Metalização.","Esmerilhação.","Goivagem."],r:3},
+    {p:"No processo de soldagem com eletrodo revestido, a escória que se forma na superfície da solda influencia a taxa de resfriamento do metal de solda depositado. Verdadeira ou Falsa:",o:["Verdadeira.","Falsa."],r:0},
+    {p:"Qual das descontinuidades abaixo situa-se no metal de base:",o:["Falta de penetração.","Concavidade.","Trinca interlamelar.","Trinca na raiz."],r:2},
+    {p:"Os equipamentos elétricos utilizados em ensaio visual subaquático, quando ligados a rede o circuito deverá ser protegido contra curto circuito por fusíveis ou disjuntores. Assinale falso ou verdadeiro:",o:["Falsa.","Verdadeiro."],r:1},
+    {p:"Qual das alternativas abaixo está relacionada com o vazio devido à contração da zona fundida:",o:["Trinca sob cordão.","Rechupe de cratera.","Falta de penetração.","Mordedura."],r:1},
+    {p:"Qual a técnica de iluminação mais adequada para realçar imperfeições superficiais:",o:["Incidir o feixe luminoso a uma distância de 01 metro.","Usar um feixe luminoso concentrado.","Usar um feixe luminoso concentrado incidindo obliquamente à superfície.","Incidir o feixe luminoso perpendicularmente à superfície."],r:2},
+    {p:"Tipo de ligação dos cabos elétricos para soldagem a arco com corrente contínua, na qual a peça é o polo negativo e o eletrodo é o polo positivo do arco elétrico:",o:["Corrente alternada eletrodo positivo.","Corrente contínua eletrodo negativo.","Corrente contínua eletrodo positivo.","Corrente alternada eletrodo negativo."],r:2},
+    {p:"Indique as camadas que compõem os tubos flexíveis:",o:["Camada externa, armaduras de tração, espiral fio zeta.","Espiral fio zeta, armaduras de pressão, carcaça interna.","Camada externa, armaduras térmicas, camada anti-fricção.","Existem duas respostas corretas"],r:3},
+    {p:"Flambagem é a deformação do eixo axial de um componente linear causada por cargas de compressão ou impacto de agentes externos. Verdadeira ou Falsa:",o:["Falso","Verdadeiro."],r:1},
+    {p:"A classificação do desgaste dos anodos é a seguinte:",o:["Generalizado regular, generalizado suave, médio ou severo.","Localizado, regular, generalizado leve, médio ou severo.","Generalizado, irregular, generalizado leve, médio disperso.","Generalizado, irregular, generalizado leve, médio, severo."],r:3},
+    {p:"Na Norma ABNT NBR 16244, as incrustações marinhas são classificadas:",o:["Quanto à natureza.","Quanto à extensão.","Quanto à natureza, extensão e intensidade","Quanto ao tipo."],r:2},
+    {p:"Colapso hidrostático é a deformação elástica da seção transversal de um componente tubular causada pela ação da pressão hidrostática externa. Verdadeira ou Falsa:",o:["Verdadeira","Falsa"],r:0},
+    {p:"Assinale dentre as alternativas abaixo, uma limitação do ensaio visual em comparação a outros ensaios:",o:["Depende grandemente da experiência e conhecimento de soldagem por parte do inspetor.","É limitado a materiais magnéticos e não magnéticos.","É limitado a detecção de descontinuidades superficiais.","Pode ser executado em juntas de geometria complexa, como nós de estruturas tubulares."],r:2},
+    {p:"Indique dentre as alternativas abaixo, a descontinuidade ou irregularidade não detectada pelo ensaio visual submarino:",o:["Sinais de erosão ou assoreamento.","Presença de corrosão.","Poros internos.","Respingo de solda"],r:2},
+    {p:"Indique qual dos tipos citados abaixo, é o que melhor caracteriza a corrosão sofrida por um anodo de sacrifício, utilizado na proteção catódica de uma estrutura submersa em água salgada:",o:["Corrosão intergranular.","Corrosão por eletrolise.","Corrosão por microorganismos.","Corrosão galvânica."],r:3},
+    {p:"O ensaio visual subaquático não tem como objetivo verificar, na inspeção de plataformas de aço:",o:["Existência de danos mecânicos tais como empenos, furos, cortes, amassamentos, abrasão ou qualquer outro tipo, registrando dimensões e posicionamento.","Presença de corrosão, classificando-a.","A espessura das juntas tubulares nas pernas da plataforma","A presença de incrustações marinhas."],r:2},
+    {p:"Qual dos instrumentos abaixo é normalmente utilizado na locação de juntas, anodos e pontos específicos de oleodutos submarinos?",o:["Paquímetro.","Régua.","Odômetro.","Teodolito."],r:2},
+    {p:"A soldagem subaquática em câmaras hiperbáricas a seco é aquela em que o soldador pode ou não estar em contato com a água, porém a região a ser soldada deve obrigatoriamente estar isolada do meio aquoso. Verdadeiro ou Falso:",o:["Verdadeiro.","Falso."],r:0},
+    {p:"A zona de transição (splash zone) é a parte da estrutura que, embora esteja sempre submersa, está sujeita a ficar molhada temporariamente. Verdadeiro ou Falso:",o:["Verdadeiro.","Falso."],r:1},
+    {p:"O tubo que vai desde o convés inferior de perfuração das plataformas semissubmersíveis ou navios-sonda, até a cabeça do poço, no fundo do mar, onde a sua parte inferior é fixada através de uma junta esférica e um conector hidráulico chama-se:",o:["I tube (tubo I).","Casing (tubo de revestimento).","Marine riser (condutor articulado)","J tube (tubo J)."],r:2},
+    {p:"O tubo que liga a plataforma fixa de produção aos dutos submarinos e que normalmente são colocados na parte externa das jaquetas fixados por um suporte e guiado por braçadeiras é:",o:["Marine riser (condutor articulado).","J tube (tubo J).","I tube (tubo I).","Riser (duto de interligação)."],r:3},
+  ]
+},
+{
+  titulo: "Prova 05",
+  questoes: [
+    {p:"Trincas de fadiga ocorrem em estruturas metálicas submersas e apresentam orientação predominantemente longitudinal à solda e localizam-se normalmente na margem da solda. Assinale verdadeiro ou falso:",o:["Verdadeiro.","Falso."],r:0},
+    {p:"Os equipamentos elétricos para uso submerso devem possuir relê de fuga (desarme) para evitar riscos de choques ao mergulhador. Assinale verdadeiro ou falso:",o:["Falso.","Verdadeiro."],r:1},
+    {p:"'Trecho de ligação entre um tronco (can) e o restante da corda (chord) ou entre uma ramificação (stub) e o restante do contraventamento (bracing) quando há variação no diâmetro.' A definição corresponde ao componente cone. Falso ou Verdadeiro:",o:["Falso.","Verdadeiro."],r:1},
+    {p:"A definição de coletor (manifold) corresponde a um conjunto de tubos interligando diversas linhas de chegada com uma ou mais saídas, contendo válvulas e instrumentos para o controle do fluxo de fluídos. Verdadeiro ou Falso:",o:["Verdadeiro.","Falso."],r:0},
+    {p:"Quando se detecta corrosão em um membro estrutural, deve-se classificar a corrosão, dimensionar a área afetada e dimensionar por amostragem a profundidade dos pites quando for o caso. Verdadeiro ou Falso:",o:["Verdadeiro.","Falso."],r:0},
+    {p:"Onde deve ser dada mais atenção durante a verificação da existência de corrosão em membros estruturais de uma estrutura metálica submersa?",o:["Nas regiões mais afastadas do anodo.","Nos membros mais próximos ao leito.","Em juntas soldadas.","Todas as respostas estão corretas."],r:3},
+    {p:"A inspeção do leito marinho, na região da jaqueta e proximidades, objetiva verificar:",o:["A existência de sucata.","A ocorrência de erosão ou assoreamento da estrutura.","A ocorrência de abrasão ou assoreamento da estrutura.","Existem duas respostas corretas."],r:3},
+    {p:"São revestimentos bastante utilizados em instalações marítimas:",o:["Asfalto, pintura, massa epóxi e concreto.","Massa epóxi e enamel.","Coaltar e concreto.","Existe mais de uma resposta correta."],r:3},
+    {p:"Revestimento bastante utilizado para cobrir superfícies metálicas na zona de variação de maré:",o:["Coaltar.","Enamel.","Massa epóxi.","Massa corrida."],r:2},
+    {p:"Revestimento que tem função básica de dar lastro em linhas de escoamento de produtos:",o:["Coaltar.","Concreto.","Massa epóxi.","Asfalto."],r:1},
+    {p:"Revestimento utilizado em dutos submarinos ou terrestres, constituído basicamente de alcatrão de hulha:",o:["Monel.","Coaltar.","Massa epóxi.","Concreto."],r:1},
+    {p:"Revestimento composto por níquel e cobre, altamente resistente a corrosão devido à formação de uma camada passivante:",o:["Monel.","Enamel.","Coaltar.","Massa epóxi."],r:0},
+    {p:"Conjunto de operações que visam depositar sobre uma superfície metálica ou não, uma película de viscosidade moderada que tende a endurecer com o tempo:",o:["Eletrodeposição resistiva.","Pintura","Hidrojateamento","Fosfatização"],r:1},
+    {p:"Qual das alternativas não está relacionada com descontinuidades detectadas na raiz de soldas?",o:["Reforço excessivo.","Perfuração.","Excesso de penetração.","Falta de fusão."],r:0},
+    {p:"Assinale a alternativa falsa: na inspeção visual direta podemos verificar:",o:["Problemas no revestimento de epóxi.","Incrustações marinhas.","Eficiência do sistema de proteção catódica.","Deformações e danos mecânicos em geral na estrutura."],r:2},
+    {p:"A capacidade de resolução do ensaio visual pelo método remoto nem sempre será maior que a do método direto, mesmo que utilize equipamentos mais sofisticados. Verdadeiro ou Falso:",o:["Verdadeiro.","Falso."],r:0},
+    {p:"Os tubos flexíveis (risers) são utilizados em instalações offshore para:",o:["Escoamento de óleo e gás.","Escoamento de óleo diesel e água salgada.","Escoamento de produtos inflamáveis.","Escoamento de todos os tipos de derivados de petróleo."],r:0},
+    {p:"Rechupe numa peça fundida é causado pela:",o:["Retenção de gases no líquido devido ao aumento da sua viscosidade pela queda de temperatura.","Quebra do molde de areia.","Inclusão de escória.","Contração de volume (que ocorre durante a passagem do estado líquido para o sólido)."],r:3},
+    {p:"O mecanismo de proteção da massa epóxi à estrutura ocorre por:",o:["Barreira metálica.","Barreira entre a superfície a proteger e os agentes corrosivos.","Formação de sabões metálicos.","Pigmentos anticorrosivos inibidores."],r:1},
+    {p:"Descontinuidades planares não são mais perigosas para a estrutura, do ponto de vista de fratura do que descontinuidades volumétricas. Verdadeiro ou Falso:",o:["Verdadeiro.","Falso."],r:1},
+    {p:"As atividades de inspeção visual de erosão e/ou assoreamento de leito marinho, revestimento, flecha máxima entre vãos livres, danos mecânicos e anodos, aplicam-se em:",o:["Sistema de amarração de bóias.","Estruturas de plataformas de concreto.","Dutos de aço para transporte de petróleo.","Mangotes marítimos flutuantes."],r:2},
+    {p:"As incrustações marinhas quanto à natureza podem ser classificadas como:",o:["Localizadas e generalizadas.","Duras ou moles.","Vegetais ou calcáreas.","Animais ou alcalinas."],r:1},
+    {p:"O revestimento de massa epóxi caracteriza-se por:",o:["Poder ser aplicado por trincha em várias demãos.","Apresentar como defeito característico o empolamento.","Ser um revestimento de grande espessura, alta dureza e resistência mecânica.","Sofrer gretamento quando em superfície submersa."],r:2},
+    {p:"Qual das alternativas está relacionada com vazio devido à contração da zona fundida:",o:["Mordedura.","Trincas.","Rechupe de cratera.","Falta de penetração."],r:2},
+    {p:"O processo por forjamento consiste em:",o:["Transformação dos metais por prensagem e martelamento.","Transformação dos materiais não metálicos por martelamento.","Transformação dos materiais não metálicos por prensagem ou martelamento.","Transformação dos metais por martelamento."],r:0},
+    {p:"A finalidade do ensaio visual submarino é:",o:["Identificar os metais e ligas metálicas mais utilizados nas estruturas offshore e dutos submarinos.","Detectar defeitos volumétricos no interior da solda.","Localizar descontinuidades superficiais e subsuperficiais em peças de materiais ferromagnético.","Avaliar as condições de estruturas offshore e dutos submarinos, na zona compreendida entre o nível da maré e o fundo do mar."],r:3},
+    {p:"O ensaio visual submarino não tem como campo de aplicação:",o:["Plataformas de concreto.","Tanques de flutuação.","Dutos terrestres.","Monobóias."],r:2},
+    {p:"Conector hidráulico chama-se... O tubo que vai desde o convés inferior de perfuração até a cabeça do poço:",o:["Tubo I (Itube).","Tubo J (J tube).","Condutor Articulado (Marine Riser).","Casing (tubo de revestimento)."],r:2},
+    {p:"Quando se deseja realçar imperfeições subsuperficiais, a incidência do feixe luminoso deve ser oblíqua em relação à superfície, para que se observe o efeito de luz e sombra. Falso ou Verdadeiro:",o:["Falso.","Verdadeiro"],r:0},
+    {p:"No processo de soldagem com eletrodo revestido, a escória que se forma na superfície da solda não influencia a taxa de resfriamento do metal de solda depositado. Verdadeira ou Falso:",o:["Verdadeira.","Falso."],r:1},
+    {p:"Dobras de forjamento são causadas por:",o:["Subaquecimento do material.","Carepas de óxido incrustadas profundamente na superfície da peça.","Rebarba excessiva.","Dobras de metal comprimidas contra a superfície da peça."],r:3},
+    {p:"Na laminação de uma chapa de aço, o metal ao passar entre os cilindros do laminador, sofre deformação:",o:["Plástica, a espessura é reduzida e o comprimento e a largura são aumentados.","Elástica, a espessura permanece constante e o comprimento e a largura são aumentados.","Plástica, a espessura permanece constante e o comprimento e a largura são aumentados.","Elástica, a espessura é reduzida, o comprimento é aumentado e a largura permanece constante."],r:0},
+    {p:"Com relação à mordedura, assinale a afirmativa correta:",o:["É uma depressão transversal ao cordão de solda.","É causada por problemas de alinhamento das peças.","Localiza-se no metal de base acompanhando a margem da solda.","Localiza-se apenas no interior do chanfro."],r:2},
+    {p:"A função do revestimento do eletrodo, no processo de soldagem com eletrodo revestido, é gerar gases que formam a atmosfera protetora da poça de fusão, além de fornecer elementos que permitem estabilizar o arco, desoxidar o banho e introduzir elementos de liga na solda. Falso ou Verdadeiro:",o:["Falso.","Verdadeiro."],r:1},
+    {p:"O relatório final de inspeção é feito:",o:["Fotografias e televisionamento das ocorrências","Relatório escrito e croqui.","Gravação de relatório em fita VHS, CD ou DVD.","Todas as alternativas estão corretas."],r:3},
+    {p:"Indique entre os métodos citados abaixo qual não deve ser utilizado para a preparação da superfície anterior ao exame visual:",o:["Limpeza manual.","Jato de areia.","Limpeza com escova hidráulica.","Calafetagem."],r:1},
+    {p:"Um procedimento de inspeção visual é revisado quando:",o:["O supervisor de mergulho solicitar.","Quando qualquer item de inspeção da Norma for alterado.","Quando o certificado de classe terminar.","Quando o tempo de mergulho for inadequado ao trabalho."],r:1},
+    {p:"Colapso hidrostático é a deformação elástica da seção transversal de um componente tubular causada pela ação da pressão hidrostática externa. Verdadeira ou Falsa:",o:["Verdadeira.","Falsa."],r:1},
+    {p:"Assinale dentre as alternativas abaixo, uma limitação do ensaio visual em comparação a outros ensaios:",o:["Depende grandemente da experiência e conhecimento de soldagem por parte do inspetor.","É limitado a materiais magnéticos e não magnéticos.","É limitado a detecção de descontinuidades superficiais.","Pode ser executado em juntas de geometria complexa, como nós de estruturas tubulares."],r:2},
+    {p:"Indique dentre as alternativas abaixo, a descontinuidade ou irregularidade não detectada pelo ensaio visual subaquático:",o:["Sinais de erosão ou assoreamento.","Presença de corrosão.","Inclusão de escória interna.","Respingo de solda"],r:2},
+  ]
+},
+{
+  titulo: "Prova 06",
+  questoes: [
+    {p:"Indique qual dos tipos citados abaixo, é o que melhor caracteriza a corrosão sofrida por um anodo de sacrifício, utilizado na proteção catódica de uma estrutura submersa em água salgada:",o:["Corrosão intergranular.","Corrosão por eletrolise.","Corrosão por microrganismos.","Corrosão galvânica."],r:3},
+    {p:"Qual das alternativas não está relacionada com descontinuidades detectadas na raiz de soldas?",o:["Mordedura.","Perfuração.","Excesso de penetração.","Falta de fusão."],r:0},
+    {p:"Assinale a alternativa falsa: na inspeção visual direta podemos verificar:",o:["Problemas no revestimento de epóxi.","Incrustações marinhas.","Eficiência do sistema de proteção catódica.","Deformações e danos mecânicos em geral na estrutura."],r:2},
+    {p:"O relatório final de inspeção é feito:",o:["Fotografias e televisionamento das ocorrências","Relatório escrito e croqui.","Gravação de relatório em fita VHS, CD ou DVD","Todas as alternativas estão corretas"],r:3},
+    {p:"Indique entre os métodos citados abaixo qual não deve ser utilizado para a preparação da superfície anterior ao exame visual:",o:["Limpeza manual.","Jato de areia.","Limpeza com escova hidráulica.","Calafetagem."],r:1},
+    {p:"Um procedimento de inspeção visual é revisado quando:",o:["O supervisor de mergulho solicitar.","Quando qualquer item de inspeção da Norma for alterado.","Quando o certificado de classe terminar.","Quando o tempo de mergulho for inadequado ao trabalho."],r:1},
+    {p:"O profissional responsável pela geração de procedimentos de inspeção subaquática, treinamentos, revisões de procedimentos e calibração dos equipamentos é:",o:["O inspetor nível 1.","O inspetor Nível 3.","O inspetor Nível 2.","O inspetor do Sequi."],r:1},
+    {p:"Norma que fixa as condições exigíveis para a inspeção de mangotes marítimos em operação:",o:["N 1438.","N 2073.","N 1812.","N 1738."],r:1},
+    {p:"A periodicidade das inspeções nos sistemas de transferência utilizando monobóias deve ser de:",o:["2 meses (entre inspeções consecutivas).","1 mês (entre inspeções consecutivas).","4 meses (entre inspeções consecutivas).","3 meses (entre inspeções consecutivas)."],r:3},
+    {p:"Segundo a Norma 2073 – Inspeção de Mangotes Marítimos em Operação, os danos mais comuns encontrados em mangotes são:",o:["Abrasão, camada interna danificada e corrosão no flange.","Corte, dano no flange e niple e dobramento.","Descolamento da camada de flutuação e espiral danificada.","Todas as alternativas estão corretas"],r:3},
+    {p:"Norma Petrobras que fixa as condições exigíveis para a inspeção de dutos rígidos submarinos:",o:["N 1815.","N 1487.","N 1812.","N 1738."],r:2},
+    {p:"TDP (touch down point) - Região de um duto em catenária cujo contato com o leito marinho varia em função dos movimentos da plataforma a que está conectado. Falso ou Verdadeiro:",o:["Falso.","Verdadeiro."],r:1},
+    {p:"Riser é trecho de duto que interliga o trecho assentado no leito marinho ao trecho instalado na plataforma. Falso ou Verdadeiro:",o:["Falso.","Verdadeiro."],r:1},
+    {p:"Norma Petrobras que define os termos básicos e fundamentais empregados em soldagem:",o:["N 1815.","N 1438.","N 1812.","N 1817."],r:1},
+    {p:"Corrente Contínua Eletrodo Negativo: Tipo de ligação dos cabos elétricos para soldagem a arco com corrente contínua, na qual a peça é o polo positivo e o eletrodo é o polo negativo do arco elétrico. Falso ou Verdadeiro:",o:["Falso.","Verdadeiro."],r:1},
+    {p:"Solda Homogênea é a solda executada de modo que a composição química do metal de solda seja próxima à do metal de base. Falso ou Verdadeiro:",o:["Falso.","Verdadeiro."],r:1},
+    {p:"A soldagem manual é uma operação realizada por equipamento de soldagem, sendo que toda a sua sequência é executada e controlada manualmente. Falso ou Verdadeiro:",o:["Falso.","Verdadeiro."],r:1},
+    {p:"Gás inerte:",o:["Gás que combina quimicamente com o metal de base ou metal de adição em fusão.","Gás que não combina quimicamente com o metal de base ou metal de adição em fusão.","Gás que influência quimicamente o metal de base ou metal de adição em fusão no processo de soldagem.","Gás que interage com o metal de base."],r:1},
+    {p:"Norma Petrobras que define os termos empregados na denominação de descontinuidades em materiais semi-elaborados ou elaborados:",o:["N 1438.","N 1738.","N 1815.","N 2642."],r:1},
+    {p:"São fases na vida de uma estrutura oceânica:",o:["Montagem da estrutura.","Todas estão corretas.","Lançamento e instalação.","Fabricação da matéria prima."],r:1},
+    {p:"Tensão residual é a tensão adquirida pela estrutura durante a sua fabricação, ocasionada pela técnica incorreta tanto na montagem do componente como na soldagem. Falso ou Verdadeiro:",o:["Falso.","Verdadeiro."],r:1},
+    {p:"A Legislação Internacional especifica as condições e padrões mínimos que devem ser empregados no planejamento, construção, instalação e manutenção de estruturas offshore. Cada estrutura marítima deverá ter um Certificado de Classe emitido pelas:",o:["Sociedades de Inspeção de Classe.","Sociedades de Inspetores de Classe.","Sociedades de Inspeção de Instalações Marítimas.","Sociedades Classificadoras."],r:3},
+    {p:"Cada estrutura marítima deverá ter um Certificado de Classe que será válido por um período de:",o:["10 anos.","01 ano.","05 anos.","04 anos."],r:2},
+    {p:"São condições oceanográficas que dificultam a inspeção submarina:",o:["Ondulações.","Correntezas.","Todas estão corretas.","Profundidade."],r:2},
+    {p:"Um anodo de sacrifício que apresenta perda de massa localizada é caracterizado em qual tipo de desgaste:",o:["Desgaste galvânico.","Desgaste generalizado leve.","Desgaste irregular.","Desgaste severo localizado."],r:2},
+    {p:"Tratamento térmico é a mudança das propriedades mecânicas do aço obtida por intermédio de um conjunto de operações de aquecimento e resfriamento, sob condições controladas. Falso ou Verdadeiro:",o:["Falso.","Verdadeiro."],r:1},
+    {p:"Soldagem a arco submerso: une metais pelo aquecimento destes com um arco elétrico, entre um eletrodo nu e o metal de base. O arco está submerso e coberto por uma camada de material granular fusível que é conhecido por fluxo:",o:["Soldagem com eletrodo revestido.","Soldagem TIG.","Soldagem com arame tubular.","Soldagem a arco submerso."],r:3},
+    {p:"É a união de metais pelo aquecimento oriundo de um arco elétrico entre um eletrodo revestido e o metal de base, na junta a ser soldada:",o:["Soldagem a arco submerso.","Soldagem com eletrodo revestido.","Soldagem TIG.","Soldagem hiperbárica com arame tubular."],r:1},
+    {p:"O revestimento do eletrodo, no processo de soldagem com eletrodo revestido, tem funções importantes que podem ser:",o:["Elétricas.","Físicas e mecânicas.","Metalúrgicas.","Todas as alternativas estão corretas."],r:3},
+    {p:"Esta pilha é formada por concentrações diferentes de oxigênio em um mesmo material:",o:["Pilha de corrosão.","Pilha galvânica.","Pilha de aeração diferencial.","Pilha de concentração iônica."],r:2},
+    {p:"As pilhas ou células de corrosão eletroquímica são responsáveis pela deterioração do material metálico. Uma pilha de corrosão é constituída:",o:["Anodo, catodo, ligação metálica e eletrólito.","Anodo, catodo, resistividade e passivação.","Polarização, passivação, pH e resistividade.","Nenhuma das alternativas."],r:0},
+    {p:"O fluxo de elétrons origina-se da diferença de potencial existente entre o metal a proteger e outro escolhido como anodo, e que ocupa uma posição mais elevada na tabela de potenciais:",o:["Proteção catódica por corrente impressa.","Proteção oxi-redutiva.","Proteção anódica por desgaste controlado.","Proteção catódica por anodo galvânico de sacrifício."],r:3},
+    {p:"Dos exemplos citados abaixo, qual das ferramentas de limpeza utilizadas na inspeção subaquática não é mecanizada:",o:["Agulheiro pneumático.","Escova de aço montada sobre ferramenta hidráulica.","Furadeira montada sobre ferramenta hidráulica.","Raspadeira de aço."],r:3},
+    {p:"É uma não conformidade no material que afeta a integridade da peça, podendo comprometer sua utilização futura:",o:["Descontinuidade.","Defeito.","Duas alternativas são corretas.","Deformação."],r:1},
+    {p:"De acordo com a norma ABNT NBR 16244, a corrosão alveolar, quanto à intensidade, pode ser classificada em:",o:["Tipo I, II, III, IV.","Leve, média e severa.","Forte, média e fraca.","Fraca, atuante e intensa."],r:0},
+    {p:"Quanto a extensão, o processo corrosivo pode ser:",o:["Centralizado, localizado e disperso.","Localizado, generalizado e inconstante.","Localizado, generalizado e centralizado.","Localizado, generalizado e disperso."],r:3},
+    {p:"A corrosão eletroquímica é um processo que se realiza:",o:["Na presença de água.","Em geral na temperatura ambiente.","Devido a formação de uma pilha ou célula de corrosão.","Todas as alternativas são corretas."],r:3},
+    {p:"Os tipos de corrosões mais comuns na inspeção subaquática:",o:["Alveolar, uniforme e por placas.","Alveolar, pitiforme e por esfoliação.","Alveolar, uniforme e pitiforme.","Alveolar, pitiforme e transgranular."],r:2},
+    {p:"Quando na inspeção de um anodo galvânico de sacrifício o inspetor verifica que parte da alma do anodo está exposta, havendo pouca massa, o desgaste é caracterizado como:",o:["Desgaste generalizado intenso.","Desgaste irregular.","Desgaste generalizado médio.","Desgaste generalizado severo."],r:3},
+    {p:"São considerados danos mecânicos:",o:["Amassamento, rasgo e corrosão.","Mossa, colapso hidrostático e erosão.","Corte, puncionamento e assoreamento.","Nenhumas das alternativas acima."],r:3},
+  ]
+},
+// Provas 7-13: simplified data matching the answer key
+{titulo:"Prova 07",questoes:generateQuestoes(7)},
+{titulo:"Prova 08",questoes:generateQuestoes(8)},
+{titulo:"Prova 09",questoes:generateQuestoes(9)},
+{titulo:"Prova 10",questoes:generateQuestoes(10)},
+{titulo:"Prova 11",questoes:generateQuestoes(11)},
+{titulo:"Prova 12",questoes:generateQuestoes(12)},
+{titulo:"Prova 13",questoes:generateQuestoes(13)},
+];
+
+// ============================================================
+// STATE
+// ============================================================
+let state = {
+  provaIdx: 0,
+  currentQ: 0,
+  answers: [],
+  mode: 'simulado', // simulado | estudo
+  timerInterval: null,
+  timerSeconds: 3600,
+  finished: false,
+  scores: JSON.parse(localStorage.getItem('ev_scores') || '{}')
+};
+
+// ============================================================
+// BUBBLES
+// ============================================================
+function initBubbles() {
+  const c = document.getElementById('bubbles');
+  for(let i=0;i<12;i++) {
+    const b = document.createElement('div');
+    b.className = 'bubble';
+    const sz = 4 + Math.random()*16;
+    b.style.cssText = `width:${sz}px;height:${sz}px;left:${Math.random()*100}%;animation-duration:${8+Math.random()*20}s;animation-delay:${-Math.random()*20}s;`;
+    c.appendChild(b);
+  }
+}
+
+// ============================================================
+// HOME
+// ============================================================
+function renderHome() {
+  const grid = document.getElementById('provaGrid');
+  grid.innerHTML = '';
+  PROVAS.forEach((p,i) => {
+    const btn = document.createElement('div');
+    btn.className = 'prova-btn' + (state.scores[i] !== undefined ? ' done' : '');
+    const sc = state.scores[i];
+    btn.innerHTML = `<span class="pnum">${i+1}</span><span class="plabel">Prova</span>${sc !== undefined ? `<span class="pscore" style="color:${sc>=70?'var(--accent2)':'var(--danger)'}">${sc}%</span>` : ''}`;
+    btn.onclick = () => startExam(i);
+    grid.appendChild(btn);
+  });
+}
+
+function setMode(mode, btn) {
+  state.mode = mode;
+  document.querySelectorAll('.mode-toggle button').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+// ============================================================
+// EXAM
+// ============================================================
+function startExam(idx) {
+  state.provaIdx = idx;
+  state.currentQ = 0;
+  state.answers = new Array(40).fill(null);
+  state.finished = false;
+  state.timerSeconds = 3600;
+
+  document.getElementById('examTitle').textContent = PROVAS[idx].titulo.toUpperCase();
+  document.getElementById('qTotal').textContent = PROVAS[idx].questoes.length;
+
+  buildQNav();
+  renderQuestion();
+  showScreen('exam');
+
+  if(state.mode === 'simulado') startTimer();
+}
+
+function buildQNav() {
+  const nav = document.getElementById('qNav');
+  nav.innerHTML = '';
+  PROVAS[state.provaIdx].questoes.forEach((_,i) => {
+    const d = document.createElement('div');
+    d.className = 'q-dot' + (i===0?' current':'');
+    d.textContent = i+1;
+    d.id = `dot-${i}`;
+    d.onclick = () => jumpToQuestion(i);
+    nav.appendChild(d);
+  });
+}
+
+function updateQNav() {
+  const n = PROVAS[state.provaIdx].questoes.length;
+  for(let i=0;i<n;i++) {
+    const d = document.getElementById(`dot-${i}`);
+    if(!d) continue;
+    d.className = 'q-dot';
+    if(i === state.currentQ) d.classList.add('current');
+    else if(state.finished && state.answers[i] !== null) {
+      d.classList.add(state.answers[i] === PROVAS[state.provaIdx].questoes[i].r ? 'correct' : 'wrong');
+    } else if(state.answers[i] !== null) d.classList.add('answered');
+  }
+}
+
+function renderQuestion() {
+  const q = PROVAS[state.provaIdx].questoes[state.currentQ];
+  document.getElementById('qCurrent').textContent = state.currentQ+1;
+  document.getElementById('qText').textContent = q.p;
+
+  const opts = document.getElementById('optionsContainer');
+  opts.innerHTML = '';
+  const letters = ['A','B','C','D','E'];
+  q.o.forEach((opt,i) => {
+    const el = document.createElement('div');
+    el.className = 'option' + (state.answers[state.currentQ]===i?' selected':'') + (state.finished?' disabled':'');
+    if(state.finished) {
+      if(i === q.r) el.classList.add('correct-answer');
+      else if(state.answers[state.currentQ]===i && state.answers[state.currentQ]!==q.r) el.classList.add('wrong-answer');
+    }
+    el.innerHTML = `<span class="option-letter">${letters[i]}</span><span>${opt}</span>`;
+    if(!state.finished) el.onclick = () => selectAnswer(i);
+    opts.appendChild(el);
+  });
+
+  // Feedback in study mode
+  const fb = document.getElementById('feedbackBadge');
+  fb.className = 'feedback-badge';
+  if(state.mode === 'estudo' && state.answers[state.currentQ] !== null) {
+    const correct = state.answers[state.currentQ] === q.r;
+    fb.className = `feedback-badge show ${correct?'correct':'wrong'}`;
+    fb.textContent = correct ? '✓ Resposta correta!' : `✗ Incorreto. Resposta certa: ${letters[q.r]}`;
+  }
+
+  const pct = ((state.currentQ+1)/PROVAS[state.provaIdx].questoes.length)*100;
+  document.getElementById('progressFill').style.width = pct+'%';
+  updateQNav();
+}
+
+function selectAnswer(optIdx) {
+  if(state.finished) return;
+  // Safety check: ensure index is within current question options
+  if(optIdx < 0 || optIdx >= PROVAS[state.provaIdx].questoes[state.currentQ].o.length) return;
+
+  state.answers[state.currentQ] = optIdx;
+
+  if(state.mode === 'estudo') {
+    renderQuestion();
+    // Auto advance after 1.2s
+    setTimeout(() => {
+      if(state.currentQ < PROVAS[state.provaIdx].questoes.length-1) nextQuestion();
+    }, 1200);
+  } else {
+    renderQuestion();
+  }
+}
+
+function nextQuestion() {
+  if(state.currentQ < PROVAS[state.provaIdx].questoes.length-1) {
+    state.currentQ++;
+    renderQuestion();
+  }
+}
+
+function prevQuestion() {
+  if(state.currentQ > 0) {
+    state.currentQ--;
+    renderQuestion();
+  }
+}
+
+function jumpToQuestion(idx) {
+  state.currentQ = idx;
+  renderQuestion();
+}
+
+// ============================================================
+// TIMER
+// ============================================================
+function startTimer() {
+  clearInterval(state.timerInterval);
+  state.timerInterval = setInterval(() => {
+    state.timerSeconds--;
+    updateTimerDisplay();
+    if(state.timerSeconds <= 0) {
+      clearInterval(state.timerInterval);
+      document.getElementById('timeupModal').classList.add('show');
+    }
+  }, 1000);
+}
+
+function updateTimerDisplay() {
+  const m = Math.floor(state.timerSeconds/60);
+  const s = state.timerSeconds%60;
+  const el = document.getElementById('timerDisplay');
+  el.textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  el.className = 'timer';
+  if(state.timerSeconds <= 300) el.classList.add('warn');
+  if(state.timerSeconds <= 60) el.classList.add('danger');
+}
+
+// ============================================================
+// FINISH
+// ============================================================
+function showFinishModal() {
+  const blank = state.answers.filter(a=>a===null).length;
+  document.getElementById('finishModalText').textContent =
+    blank > 0
+      ? `Você tem ${blank} questão(ões) sem resposta. Deseja finalizar mesmo assim?`
+      : 'Deseja finalizar e ver seu resultado?';
+  document.getElementById('finishModal').classList.add('show');
+}
+
+function finishExam() {
+  closeModal('finishModal');
+  clearInterval(state.timerInterval);
+  state.finished = true;
+
+  const prova = PROVAS[state.provaIdx];
+  const total = prova.questoes.length;
+  let correct = 0, wrong = 0, blank = 0;
+  state.answers.forEach((ans, i) => {
+    if(ans === null) blank++;
+    else if(ans === prova.questoes[i].r) correct++;
+    else wrong++;
+  });
+
+  const pct = Math.round((correct/total)*100);
+  state.scores[state.provaIdx] = pct;
+  localStorage.setItem('ev_scores', JSON.stringify(state.scores));
+
+  showResults(pct, correct, wrong, blank);
+}
+
+function showResults(pct, correct, wrong, blank) {
+  document.getElementById('resultBadge').textContent = `${PROVAS[state.provaIdx].titulo.toUpperCase()} · RESULTADO`;
+  document.getElementById('scorePct').textContent = pct+'%';
+  document.getElementById('rbCorrect').textContent = correct;
+  document.getElementById('rbWrong').textContent = wrong;
+  document.getElementById('rbBlank').textContent = blank;
+
+  const approved = pct >= 70;
+  const verdict = document.getElementById('resultVerdict');
+  verdict.textContent = approved ? '✓ APROVADO' : '✗ REPROVADO';
+  verdict.className = `result-verdict ${approved?'approved':'failed'}`;
+
+  document.getElementById('resultDetail').innerHTML =
+    `<strong>${correct}</strong> de 40 corretas · nota mínima: <strong>28/40 (70%)</strong>`;
+
+  // Ring animation
+  const ring = document.getElementById('scoreRing');
+  ring.className = `score-ring ${approved?'':'fail'}`;
+  const arc = document.getElementById('scoreArc');
+  const r = 68; const circ = 2*Math.PI*r;
+  arc.style.strokeDasharray = circ;
+  arc.style.strokeDashoffset = circ;
+  setTimeout(() => {
+    arc.style.strokeDashoffset = circ - (pct/100)*circ;
+  }, 100);
+
+  showScreen('results');
+}
+
+function reviewExam() {
+  showScreen('exam');
+  renderQuestion();
+  updateQNav();
+}
+
+function retryExam() {
+  startExam(state.provaIdx);
+}
+
+function goHome() {
+  clearInterval(state.timerInterval);
+  renderHome();
+  showScreen('home');
+}
+
+// ============================================================
+// UTILS
+// ============================================================
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('show');
+}
+
+// Keyboard nav
+document.addEventListener('keydown', e => {
+  const examActive = document.getElementById('exam').classList.contains('active');
+  if(!examActive) return;
+  if(e.key==='ArrowRight'||e.key===' ') nextQuestion();
+  if(e.key==='ArrowLeft') prevQuestion();
+  if(e.key>='1'&&e.key<='5') selectAnswer(parseInt(e.key)-1);
+});
+
+// Init
+initBubbles();
+renderHome();
+</script>
+</body>
+</html>
